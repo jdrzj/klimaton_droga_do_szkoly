@@ -1,0 +1,13 @@
+<h3>Witaj, <%= @current_user.firstname %>!</h3>
+<p>Szkoła: <%=current_user.school.name%>, <%=current_user.school.city.name%></p>
+<% if current_user.role == "student" %>
+  <%= link_to "Idziemy do szkoły?", mapa_path %>
+<%end%>
+<% if current_user.role == "parent" %>
+  <p>Dzieci:</p>
+  <ul>
+    <% current_user.kids.each do |kid|%>
+      <li><a href="kid"><%=kid.firstname%></a></li>
+    <% end %>
+  </ul>
+<% end %>

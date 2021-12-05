@@ -1,0 +1,214 @@
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A==" crossorigin="" />
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA==" crossorigin=""></script>
+<style>
+  html { width: 100vw; height: 90vh; }
+  /* #map { height: 500px; width: 500px; } */
+  #map, body, .container{ height: 100%; width: 100%; margin: 0;}
+  .overlay{
+    position: absolute;
+    z-index: 99999;
+    height: 90%;
+    width: 94%;
+    /* margin: 16px; */
+    background-color: rgb(0 183 90 / 50%);
+  }
+  .route-option {
+    width: 80%;
+    text-align: center;
+    margin: 0 10%;
+  }
+
+  .route-option .btn {
+    width: inherit;
+  }
+
+  .route-option-description {
+    background-color: white;
+    font-weight: 500;
+    display: inline;
+  }
+
+  .route-title {
+    background-color: white;
+    font-size: 44px;
+    display: inline;
+  }
+
+  .route-container {
+    width: 70%;
+    margin: 70px 15%;
+  }
+
+  html {font-family: 'Open sans';}
+
+  .route-options {
+    display: flex;
+    align-self: bottom;
+    margin-bottom: 70px;
+  }
+
+  .overlay {
+    display: flex;
+    flex-flow: column;
+    flex-grow: 1;
+    justify-content: space-between;
+  }
+.route-finished-message {
+    background-color: white;
+    margin: 0 10%;
+    padding: 20px;
+    text-align:  center;
+    font-size: 25px;
+    font-weight: bold;
+    border-radius: 25px;
+    z-index: 0;
+}
+
+.route-finished-icon {
+    text-align: center;
+    background-color: white;
+    width: 70px;
+    height: 70px;
+    margin: auto;
+    line-height: 70px;
+    border: 3px solid #cecece;
+    border-radius: 999px;
+    font-size: 35px;
+    margin-bottom: -20px;
+    z-index: 99999999999;
+}
+
+.route-finished {
+    display: flex;
+    flex-direction: column;
+}
+</style>
+<div class="container">
+  <div class="overlay">
+    <div class="route-container">
+      <div class="route-title">gratulacje! 👏</div>
+    </div>
+    <div class="route-finished">
+      <div class="route-finished-icon">
+        🎁
+      </div>
+      <div class="route-finished-message">
+        Spędziłeś 20 minut na dworze, to połowa Twojego WF! Super 💪
+      </div>
+    </div>
+    <div class="route-options">
+      <div class="route-option">
+        <%=link_to "oceń trasę i zgarnij punkty", rate_travel_path, class:'btn btn-primary'%>
+      </div>
+    </div>
+  </div>
+  <div id="map"></div>
+</div>
+<!--<button id="disable-map-movement">paint</button>
+<button id="enable-map-movement">move map</button> -->
+<script>
+  function randomHexColor(){
+    const part = () =>
+      (Math.floor(Math.random() * 183) + 72)
+        .toString(16)
+        .padStart(2, '0');
+    const r = '00';
+    const g = part();
+    const b = '00';
+    return `#${r}${g}${b}`;
+  };
+
+  function formatLocation(location, tile_size) {
+    return (location - (location % tile_size));
+  }
+
+  const tile_size = 0.0008;
+  const start = [51.084344, 16.985886];
+  const end = [51.136452, 17.101211];
+  const point = [(start[0]+end[0])/2, (start[1]+end[1])/2];
+  const map = L.map('map').setView(point, 14);
+  let mouseclicked = false;
+  let drawingenabled = false;
+  let polygons = {}
+
+  map.on('click', function(e) {
+    let bounds = map.getBounds();
+  });
+
+  map.on('mousedown', function(e) {
+    mouseclicked = true;
+  });
+
+  map.on('mouseup', function(e) {
+    mouseclicked = false;
+  });
+
+  map.on('mousemove', function(e) {
+    if (mouseclicked && drawingenabled) {
+      var lat = e.latlng.lat - (e.latlng.lat % tile_size);
+      var lng = e.latlng.lng - (e.latlng.lng % tile_size);
+      console.log([lat, lng]);
+      let p = polygons[[lat,lng]];
+      if (p) {
+        polygons[[lat,lng]].remove();
+        console.log(p);
+        p.options.color = 'red';
+        p.options.fillOpacity = 0.5;
+        polygons[[lat,lng]] = L.polygon(p._latlngs, p.options).addTo(map);
+      }
+    }
+  })
+
+  // document.getElementById("disable-map-movement").onclick = function(e) {
+  //   map.touchZoom.disable();
+  //   map.doubleClickZoom.disable();
+  //   map.scrollWheelZoom.disable();
+  //   map.boxZoom.disable();
+  //   map.keyboard.disable();
+  //   map.dragging.disable();
+  //   document.getElementsByClassName("leaflet-control-zoom")[0].hidden = true;
+  //   drawingenabled = true;
+  // }
+
+  // document.getElementById("enable-map-movement").onclick = function(e) {
+  //   map.touchZoom.enable();
+  //   map.doubleClickZoom.enable();
+  //   map.scrollWheelZoom.enable();
+  //   map.boxZoom.enable();
+  //   map.keyboard.enable();
+  //   map.dragging.enable();
+  //   document.getElementsByClassName("leaflet-control-zoom")[0].hidden = false;
+  //   drawingenabled = false;
+  // }
+
+  L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
+    attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
+      maxZoom: 18,
+      id: 'mapbox/streets-v11',
+      tileSize: 512,
+      zoomOffset: -1,
+      accessToken: 'pk.eyJ1IjoiamRyemoiLCJhIjoiY2l6cmJxMWhhMDB4MzJwcWx3NnE3YWhvOCJ9.rzzcBeYaN7gTxd8km9NnGQ'
+  }).addTo(map);
+
+  for(let lat = start[0]; lat < end[0] ; lat += tile_size) {
+    for(let lng = start[1]; lng < end[1]; lng += tile_size) {
+      const lat_fixed = formatLocation(lat, tile_size);
+      const lng_fixed = formatLocation(lng, tile_size);
+
+      var cord = [
+        [lat_fixed,             lng_fixed],
+        [lat_fixed + tile_size, lng_fixed],
+        [lat_fixed + tile_size, lng_fixed + tile_size],
+        [lat_fixed,             lng_fixed + tile_size]
+      ];
+
+      const style = {
+        weight: 0,
+        fillOpacity: 0.5,
+        color: randomHexColor(),
+      };
+
+      // polygons[[lat_fixed,lng_fixed]] = L.polygon(cord, style).addTo(map);
+    }
+  }
+</script>
